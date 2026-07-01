@@ -1,0 +1,722 @@
+{% raw %}<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Managing Director — DarkBrown</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Mulish:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-page:#F4EDE6; --text-primary:#3E2723; --text-secondary:#8C7A68; --text-muted:#857260;
+    --text-dim:#6B5648; --accent-gold:#9A7A2E; --accent-gold-light:#C9A86A; --border-default:#EAE0D2;
+    --border-light:#D9C9B5; --surface-card:#FFFFFF; --surface-hover:#F0E7DA; --surface-inner:#F4EDE6;
+    --green-strong:#1E7E58; --green-medium:#2E7D6A; --green-chart:#2E6B57; --orange-warn:#BC512B;
+    --orange-bounce:#A85A2C; --chart-billed:#D9C9B5;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:'Mulish',-apple-system,BlinkMacSystemFont,sans-serif;-webkit-font-smoothing:antialiased;
+    color:var(--text-primary);
+    background:var(--bg-page) radial-gradient(circle,rgba(184,146,85,0.45) 1.5px,transparent 1.5px);
+    background-size:36px 36px;overflow:clip;
+  }
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-thumb{background:var(--border-light);border-radius:6px;border:2px solid var(--bg-page)}
+  ::-webkit-scrollbar-track{background:transparent}
+  .noscroll::-webkit-scrollbar{height:0;width:0}
+  .serif{font-family:'Cormorant Garamond',serif}
+
+  /* corner rings */
+  .ring{position:fixed;border-radius:50%;pointer-events:none;z-index:0}
+  .tr{top:0;right:0;transform:translate(50%,-50%)}
+  .bl{bottom:0;left:0;transform:translate(-50%,50%)}
+
+  .app{position:relative;height:100vh;width:100%;overflow:clip}
+  main.content{position:relative;z-index:1;height:100vh;overflow-y:auto;overflow-x:hidden}
+  .inner{max-width:1320px;margin:0 auto;padding:24px 28px 64px}
+
+  h1.title{font-size:28px;font-weight:700;color:var(--text-primary);line-height:1.1}
+  .badge-live{font-size:11px;font-weight:600;color:var(--green-strong);background:rgba(46,107,87,.18);
+    border:1px solid rgba(95,184,154,.35);padding:2px 9px;border-radius:20px}
+  .subtitle{color:var(--text-secondary);font-size:12.5px;margin-top:5px}
+
+  .tabs{display:flex;gap:2px;border-bottom:1px solid var(--border-default);margin-bottom:18px;
+    overflow-x:auto;overflow-y:hidden;white-space:nowrap}
+  .tab{padding:8px 14px;background:transparent;border:none;color:var(--text-muted);font-size:13px;
+    font-weight:550;font-family:inherit;border-radius:7px 7px 0 0;cursor:pointer;transition:background .12s,color .12s}
+  .tab:hover{background:var(--surface-hover);color:#4E342E}
+  .tab.active{background:var(--surface-card);color:var(--text-primary);border:1px solid var(--border-default);
+    border-bottom:1px solid var(--surface-card);font-weight:650;margin-bottom:-1px}
+
+  .pane{display:none}
+  .pane.active{display:block}
+
+  /* time switcher */
+  .switcher{display:inline-flex;background:var(--surface-card);border:1px solid var(--border-light);
+    border-radius:9px;padding:3px;gap:2px;margin-bottom:16px}
+  .pill{padding:5px 13px;border-radius:7px;border:none;background:transparent;font-size:12px;font-weight:550;
+    color:var(--text-muted);cursor:pointer;font-family:inherit}
+  .pill.active{background:var(--text-primary);color:#fff;font-weight:650}
+
+  .card{background:var(--surface-card);border:1px solid var(--border-default);border-radius:12px;padding:18px}
+  .section-title{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--text-primary)}
+
+  /* KPI grid */
+  .kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+  .kpi{background:var(--surface-card);border:1px solid var(--border-default);border-radius:12px;padding:16px;
+    cursor:pointer;transition:border-color .12s,transform .12s}
+  .kpi:hover{border-color:var(--accent-gold-light);transform:translateY(-2px)}
+  .kpi-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+  .chip{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center}
+  .delta{font-size:11px;font-weight:600;padding:2px 7px;border-radius:12px;display:inline-flex;align-items:center;gap:3px}
+  .delta.good{color:var(--green-strong);background:rgba(46,107,87,.14)}
+  .delta.bad{color:var(--orange-warn);background:rgba(224,138,102,.18)}
+  .delta.neutral{color:var(--text-muted);background:var(--surface-hover)}
+  .kpi-value{font-size:22px;font-weight:700;color:var(--text-primary);letter-spacing:-.3px}
+  .kpi-label{font-size:12px;font-weight:550;color:var(--text-dim);margin-top:2px}
+  .kpi-sub{font-size:11px;color:var(--text-muted);margin-top:2px}
+  .kpi-cta{font-size:10.5px;color:var(--green-medium);font-weight:550;margin-top:9px}
+
+  /* alert strip */
+  .alertstrip{background:var(--surface-card);border:1px solid var(--border-light);border-left:3px solid var(--accent-gold);
+    border-radius:11px;padding:12px 14px;margin-bottom:20px}
+  .alertstrip.clear{border-left-color:var(--green-strong)}
+  .alert-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .alert-head .lbl{font-size:13px;font-weight:600;color:var(--accent-gold)}
+  .alertstrip.clear .alert-head .lbl{color:var(--green-strong)}
+  .count-pill{font-size:11px;font-weight:600;color:var(--accent-gold);background:rgba(201,168,106,.18);
+    padding:1px 8px;border-radius:12px}
+  .alert-row{padding:9px 11px;background:var(--surface-hover);border-radius:8px;display:flex;align-items:center;
+    gap:11px;margin-bottom:6px}
+  .alert-row:last-child{margin-bottom:0}
+  .alert-chip{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .alert-msg{font-size:12.5px;color:#4E342E;flex:1}
+  .alert-link{font-size:11px;color:var(--text-muted)}
+  .alert-x{width:24px;height:24px;border-radius:6px;border:none;background:transparent;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;color:var(--text-muted)}
+  .alert-x:hover{background:var(--border-light)}
+
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+
+  /* margin bars */
+  .marginrow{display:flex;align-items:center;gap:12px;margin-top:12px}
+  .marginrow .nm{font-size:12.5px;font-weight:600;width:180px;flex-shrink:0}
+  .track{flex:1;height:8px;background:var(--surface-hover);border-radius:5px;overflow:hidden}
+  .track .fill{height:100%;border-radius:5px;transition:width .6s ease}
+  .mpill{font-size:11px;font-weight:600;padding:2px 8px;border-radius:12px;flex-shrink:0;min-width:52px;text-align:center}
+
+  /* approval / generic list rows */
+  .listrow{display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--border-default);
+    cursor:pointer;transition:background .12s}
+  .listrow:last-child{border-bottom:none}
+  .listrow:hover{background:var(--surface-hover)}
+  .rowchip{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+  /* stat strip */
+  .statstrip{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+  .stat{flex:1;min-width:118px;background:var(--surface-card);border:1px solid var(--border-default);
+    border-radius:10px;padding:12px 14px}
+  .stat .k{font-size:11px;color:var(--text-secondary);font-weight:550}
+  .stat .v{font-size:17px;font-weight:700;letter-spacing:-.2px;margin-top:3px}
+
+  /* segmented toggle */
+  .seg{display:inline-flex;background:var(--surface-card);border:1px solid var(--border-light);border-radius:8px;padding:3px;margin-bottom:14px}
+  .seg button{padding:5px 14px;border:none;background:transparent;border-radius:6px;font-size:12.5px;font-weight:550;
+    color:var(--text-muted);cursor:pointer;font-family:inherit}
+  .seg button.active{background:var(--text-primary);color:#fff;font-weight:650}
+
+  /* status pills */
+  .spill{font-size:10.5px;font-weight:600;padding:3px 10px;border-radius:20px;display:inline-block;text-align:center}
+  .s-occupied{color:var(--green-strong);background:rgba(46,107,87,.14)}
+  .s-vacant{color:var(--text-muted);background:var(--surface-hover)}
+  .s-expiring{color:var(--accent-gold);background:rgba(201,168,106,.18)}
+  .s-risk{color:var(--orange-warn);background:rgba(224,138,102,.18)}
+
+  /* building accordion */
+  .bldg{background:var(--surface-card);border:1px solid var(--border-default);border-radius:12px;overflow:hidden;margin-bottom:10px}
+  .bldg-head{padding:14px 16px;cursor:pointer;display:flex;align-items:center;gap:13px}
+  .bldg-head:hover{background:var(--surface-hover)}
+  .chev{transition:transform .18s;color:var(--text-muted);flex-shrink:0}
+  .bldg.open .chev{transform:rotate(90deg)}
+  .bldg-nm{font-size:13.5px;font-weight:650;flex:1}
+  .kcol{text-align:right}
+  .kcol .kl{font-size:9.5px;text-transform:uppercase;color:var(--text-secondary);letter-spacing:.4px}
+  .kcol .kv{font-size:12.5px;font-weight:650;margin-top:1px}
+  .units{display:none;background:var(--surface-hover);border-top:1px solid var(--border-default)}
+  .bldg.open .units{display:block}
+  .unitrow{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border-default);font-size:12px}
+  .unitrow:last-child{border-bottom:none}
+
+  /* chip filters */
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .fchip{padding:5px 13px;border:1px solid var(--border-light);border-radius:20px;background:var(--surface-card);
+    font-size:12px;font-weight:550;color:var(--text-dim);cursor:pointer;font-family:inherit}
+  .fchip.active{background:var(--text-primary);color:#fff;border-color:var(--text-primary)}
+
+  table.data{width:100%;border-collapse:collapse}
+  table.data th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary);
+    padding:8px 10px;border-bottom:1px solid var(--border-default);font-weight:600}
+  table.data td{padding:11px 10px;border-bottom:1px solid var(--border-default);font-size:12.5px}
+  table.data tr:last-child td{border-bottom:none}
+  table.data tbody tr:hover{background:var(--surface-hover)}
+
+  .prio{font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:12px}
+  .p-high{color:var(--orange-warn);background:rgba(224,138,102,.18)}
+  .p-med{color:var(--accent-gold);background:rgba(201,168,106,.18)}
+  .p-low{color:var(--text-muted);background:var(--surface-hover)}
+
+  .mt16{margin-top:16px}
+
+  @media(max-width:820px){
+    .inner{padding:14px 14px 64px}
+    h1.title{font-size:22px}
+    .kpi-grid{grid-template-columns:repeat(2,1fr)}
+    .grid-2{grid-template-columns:1fr}
+    .kpi-value{font-size:18px}
+    .marginrow .nm{width:120px}
+    .switcher{overflow-x:auto;max-width:100%}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="ring tr" style="width:360px;height:360px;border:1.5px solid rgba(154,122,46,.38)"></div>
+  <div class="ring tr" style="width:520px;height:520px;border:1px solid rgba(154,122,46,.28)"></div>
+  <div class="ring tr" style="width:680px;height:680px;border:1px dashed rgba(154,122,46,.18)"></div>
+  <div class="ring tr" style="width:840px;height:840px;border:1px dashed rgba(154,122,46,.10)"></div>
+  <div class="ring bl" style="width:320px;height:320px;border:1.5px solid rgba(154,122,46,.30)"></div>
+  <div class="ring bl" style="width:480px;height:480px;border:1px solid rgba(154,122,46,.20)"></div>
+  <div class="ring bl" style="width:640px;height:640px;border:1px dashed rgba(154,122,46,.12)"></div>
+
+  <main class="content noscroll">
+    <div class="inner">
+      <div style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <h1 class="title">Managing Director</h1>
+          <span class="badge-live">Live</span>
+        </div>
+        <p class="subtitle" id="subtitle">Daily business-health snapshot</p>
+      </div>
+
+      <div class="tabs noscroll" id="tabs"></div>
+
+      <section class="pane active" id="pane-overview"></section>
+      <section class="pane" id="pane-portfolio"></section>
+      <section class="pane" id="pane-tenants"></section>
+      <section class="pane" id="pane-finance"></section>
+      <section class="pane" id="pane-maintenance"></section>
+    </div>
+  </main>
+</div>
+
+<script>
+/* =====================================================================
+   DATA LAYER  —  Everything the dashboard renders comes from DATA.*
+   To go live: replace loadData() bodies with fetch() to whitelisted
+   Frappe methods, e.g.
+       const r = await fetch('/api/method/darkbrown_md.api.get_md_overview?timeframe='+tf,
+                             {headers:{'X-Frappe-CSRF-Token': frappe.csrf_token}});
+   Keep the returned JSON shape identical to MOCK below and the UI needs
+   zero changes.
+   ===================================================================== */
+const fmt = n => 'QAR ' + Number(n).toLocaleString('en-US');
+
+const MOCK = {
+  overview: {
+    subtitle: () => new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) + ' · Daily business-health snapshot',
+    alerts: [
+      {id:'a1', tone:'warn', msg:'3 lease agreements expire within 30 days', link:'Tenants ›'},
+      {id:'a2', tone:'bounce', msg:'PDC cheque bounced — Al Maha Tower, Unit 402', link:'Finance ›'},
+      {id:'a3', tone:'warn', msg:'Rent arrears above QAR 40,000 in 90d+ bucket', link:'Finance ›'},
+    ],
+    kpis: [
+      {icon:'wallet', tint:'#2E6B57', label:'Net Margin (MTD)', value:'QAR 318,400', delta:'+6.2%', dtone:'good', sub:'vs last month', cta:'View in Finance ›'},
+      {icon:'building', tint:'#9A7A2E', label:'Portfolio Occupancy', value:'92.4%', delta:'+1.1%', dtone:'good', sub:'128 of 139 units', cta:'View in Portfolio ›'},
+      {icon:'coins', tint:'#2E6B57', label:'Rent Collected', value:'QAR 742,000', delta:'88%', dtone:'neutral', sub:'of QAR 843,000 billed', cta:'View in Finance ›'},
+      {icon:'alert', tint:'#BC512B', label:'Total Arrears', value:'QAR 101,000', delta:'+14%', dtone:'bad', sub:'across 11 tenants', cta:'View in Finance ›'},
+      {icon:'users', tint:'#9A7A2E', label:'Active Tenants', value:'118', delta:'+3', dtone:'good', sub:'2 move-ins this month', cta:'View in Tenants ›'},
+      {icon:'file', tint:'#2E6B57', label:'Leases Expiring', value:'7', delta:'30 days', dtone:'neutral', sub:'3 renewals pending', cta:'View in Tenants ›'},
+      {icon:'wrench', tint:'#9A7A2E', label:'Open Maintenance', value:'14', delta:'-2', dtone:'good', sub:'4 high priority', cta:'View in Maintenance ›'},
+      {icon:'check', tint:'#BC512B', label:'Pending Approvals', value:'6', delta:'action', dtone:'bad', sub:'QAR 84,500 total', cta:'Review below ›'},
+      {icon:'trend', tint:'#2E6B57', label:'Avg Yield / Building', value:'21.8%', delta:'+0.9%', dtone:'good', sub:'sublease spread', cta:'View in Finance ›'},
+    ],
+    margins: [
+      {name:'Al Maha Tower', pct:26, tone:'green'},
+      {name:'Pearl Residency', pct:23, tone:'green'},
+      {name:'Lusail Heights', pct:19, tone:'amber'},
+      {name:'West Bay Court', pct:14, tone:'amber'},
+      {name:'Msheireb Lofts', pct:9, tone:'orange'},
+    ],
+    chart: {
+      months:['Feb','Mar','Apr','May','Jun','Jul'],
+      billed:[790,805,812,828,840,843],
+      collected:[760,788,700,815,742,742],
+      target:800,
+    },
+    approvals: [
+      {icon:'file', type:'New Landlord Contract', ref:'Lusail Heights — Block C', amount:'QAR 32,000', age:'2d'},
+      {icon:'coins', type:'Rent Refund', ref:'Pearl Residency — Unit 210', amount:'QAR 8,500', age:'1d'},
+      {icon:'wrench', type:'Maintenance PO', ref:'West Bay Court — HVAC', amount:'QAR 18,000', age:'3d'},
+      {icon:'file', type:'Lease Renewal', ref:'Al Maha Tower — Unit 505', amount:'QAR 21,000', age:'4h'},
+      {icon:'coins', type:'Deposit Release', ref:'Msheireb Lofts — Unit 12', amount:'QAR 5,000', age:'5d'},
+    ],
+    arrears: [
+      {bucket:'Current', amt:642000, tone:'green'},
+      {bucket:'1–30 days', amt:38000, tone:'amber'},
+      {bucket:'31–60 days', amt:22000, tone:'amber'},
+      {bucket:'61–90 days', amt:19000, tone:'orange'},
+      {bucket:'90+ days', amt:22000, tone:'orange'},
+    ],
+  },
+  portfolio: {
+    stats:[
+      {k:'Buildings', v:'5'}, {k:'Total Units', v:'139'}, {k:'Occupied', v:'128'},
+      {k:'Vacant', v:'11'}, {k:'Occupancy', v:'92.4%'},
+    ],
+    buildings:[
+      {id:'b1', name:'Al Maha Tower', tags:[{t:'2 expiring',c:'expiring'}], income:'QAR 214,000', headlease:'QAR 158,000', occ:'96%', margin:26, mtone:'green',
+       units:[
+         {status:'occupied', label:'Unit 402', tenant:'Khalid Trading Co.', note:'Lease to Mar 2027', rent:'QAR 7,200'},
+         {status:'occupied', label:'Unit 505', tenant:'M. Rahman', note:'Renewal pending', rent:'QAR 6,800'},
+         {status:'vacant', label:'Unit 610', tenant:'—', note:'Ready to lease', rent:'QAR 7,000'},
+       ]},
+      {id:'b2', name:'Pearl Residency', tags:[], income:'QAR 176,000', headlease:'QAR 135,000', occ:'94%', margin:23, mtone:'green',
+       units:[
+         {status:'occupied', label:'Unit 210', tenant:'S. Fernandes', note:'Refund in review', rent:'QAR 5,900'},
+         {status:'occupied', label:'Unit 118', tenant:'Gulf Media LLC', note:'Lease to Aug 2026', rent:'QAR 6,100'},
+       ]},
+      {id:'b3', name:'Lusail Heights', tags:[{t:'churn risk',c:'risk'}], income:'QAR 198,000', headlease:'QAR 160,000', occ:'89%', margin:19, mtone:'amber',
+       units:[
+         {status:'occupied', label:'Block C — 3', tenant:'Aisha Holdings', note:'2 late payments', rent:'QAR 8,400'},
+         {status:'vacant', label:'Block C — 4', tenant:'—', note:'Vacant 21 days', rent:'QAR 8,000'},
+       ]},
+      {id:'b4', name:'West Bay Court', tags:[{t:'1 expiring',c:'expiring'}], income:'QAR 152,000', headlease:'QAR 131,000', occ:'91%', margin:14, mtone:'amber',
+       units:[
+         {status:'occupied', label:'Unit 7', tenant:'Doha Logistics', note:'HVAC maintenance', rent:'QAR 9,200'},
+       ]},
+      {id:'b5', name:'Msheireb Lofts', tags:[{t:'churn risk',c:'risk'}], income:'QAR 88,000', headlease:'QAR 80,000', occ:'85%', margin:9, mtone:'orange',
+       units:[
+         {status:'occupied', label:'Unit 12', tenant:'R. Nair', note:'Deposit release', rent:'QAR 5,400'},
+         {status:'vacant', label:'Unit 15', tenant:'—', note:'Vacant 40 days', rent:'QAR 5,200'},
+       ]},
+    ],
+  },
+  tenants: {
+    stats:[
+      {k:'Active Tenants', v:'118'}, {k:'New (MTD)', v:'2'}, {k:'Expiring 30d', v:'7'},
+      {k:'PDC Bounced', v:'1'}, {k:'Churn Risk', v:'4'},
+    ],
+    filters:['All','Expiring soon','In arrears','PDC bounced','New'],
+    tenants:[
+      {name:'Khalid Trading Co.', building:'Al Maha Tower · 402', dates:'Apr 2025 – Mar 2027', arrears:'—', flag:''},
+      {name:'Aisha Holdings', building:'Lusail Heights · Block C-3', dates:'Jan 2025 – Dec 2025', arrears:'QAR 16,800', flag:'arrears'},
+      {name:'M. Rahman', building:'Al Maha Tower · 505', dates:'Jun 2024 – Jun 2026', arrears:'—', flag:'expiring'},
+      {name:'S. Fernandes', building:'Pearl Residency · 210', dates:'Sep 2024 – Aug 2026', arrears:'QAR 4,200', flag:'bounced'},
+      {name:'Gulf Media LLC', building:'Pearl Residency · 118', dates:'Aug 2024 – Aug 2026', arrears:'—', flag:'expiring'},
+      {name:'Doha Logistics', building:'West Bay Court · 7', dates:'Feb 2025 – Feb 2027', arrears:'—', flag:''},
+    ],
+    pipeline:[
+      {stage:'Enquiry', name:'Qatar Foods WLL', unit:'Lusail Heights · Block C-4', value:'QAR 8,000/mo'},
+      {stage:'Viewing booked', name:'H. Al-Kuwari', unit:'Al Maha Tower · 610', value:'QAR 7,000/mo'},
+      {stage:'Offer sent', name:'Nova Interiors', unit:'Msheireb Lofts · 15', value:'QAR 5,200/mo'},
+    ],
+  },
+  finance: {
+    stats:[
+      {k:'Revenue MTD', v:'QAR 843,000'}, {k:'Collected', v:'QAR 742,000'}, {k:'Head-lease Cost', v:'QAR 664,000'},
+      {k:'Net Margin', v:'QAR 318,400'}, {k:'Arrears', v:'QAR 101,000'},
+    ],
+    lines:[
+      {building:'Al Maha Tower', billed:'QAR 214,000', collected:'QAR 214,000', status:'collected'},
+      {building:'Pearl Residency', billed:'QAR 176,000', collected:'QAR 171,800', status:'partial'},
+      {building:'Lusail Heights', billed:'QAR 198,000', collected:'QAR 156,000', status:'overdue'},
+      {building:'West Bay Court', billed:'QAR 152,000', collected:'QAR 152,000', status:'collected'},
+      {building:'Msheireb Lofts', billed:'QAR 88,000', collected:'QAR 48,200', status:'overdue'},
+    ],
+    pdc:[
+      {tenant:'S. Fernandes', amount:'QAR 5,900', due:'2026-07-15', status:'bounced'},
+      {tenant:'Khalid Trading Co.', amount:'QAR 7,200', due:'2026-07-20', status:'pending'},
+      {tenant:'Doha Logistics', amount:'QAR 9,200', due:'2026-07-25', status:'cleared'},
+      {tenant:'Gulf Media LLC', amount:'QAR 6,100', due:'2026-08-01', status:'pending'},
+    ],
+  },
+  maintenance: {
+    byBuilding:[
+      {name:'Al Maha Tower', open:5}, {name:'Lusail Heights', open:4},
+      {name:'West Bay Court', open:3}, {name:'Pearl Residency', open:1}, {name:'Msheireb Lofts', open:1},
+    ],
+    tickets:[
+      {prio:'high', title:'HVAC failure — common area', building:'West Bay Court', assignee:'Ravi K.', age:'2d'},
+      {prio:'high', title:'Water leak — Unit 402', building:'Al Maha Tower', assignee:'Suresh', age:'1d'},
+      {prio:'med', title:'Elevator inspection due', building:'Lusail Heights', assignee:'Unassigned', age:'5d'},
+      {prio:'med', title:'Lobby lighting replacement', building:'Al Maha Tower', assignee:'Ravi K.', age:'3d'},
+      {prio:'low', title:'Repaint stairwell', building:'Pearl Residency', assignee:'Contractor', age:'8d'},
+    ],
+  },
+};
+
+/* When you go live, this is the ONLY function that changes. */
+async function loadData(){ return MOCK; }
+
+/* ---------------- ICONS (Lucide-style, inline) ---------------- */
+const ICON = {
+  wallet:'<path d="M20 12V8H6a2 2 0 0 1 0-4h12v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>',
+  building:'<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M9 6h.01M15 6h.01M9 10h.01M15 10h.01M9 14h.01M15 14h.01"/>',
+  coins:'<circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18M7 6h1v4M16.71 13.88l.7.71-2.82 2.82"/>',
+  alert:'<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/>',
+  users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+  file:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>',
+  wrench:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
+  check:'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/>',
+  trend:'<path d="M22 7 13.5 15.5 8.5 10.5 2 17"/><path d="M16 7h6v6"/>',
+};
+const svg = (name, color, size=16) =>
+  `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON[name]||''}</svg>`;
+const tint = hex => hex.replace(/^#/,'') && `${hex}22`;
+
+/* ---------------- STATE ---------------- */
+let DATA = null;
+let activeTab = 'overview';
+let timeframe = 'month';
+let dismissed = [];
+let portfolioView = 'buildings';
+let tenantFilter = 'All';
+let expanded = [];
+
+const TABS = [
+  {id:'overview', label:'Overview'},
+  {id:'portfolio', label:'Portfolio'},
+  {id:'tenants', label:'Tenants & Leasing'},
+  {id:'finance', label:'Finance'},
+  {id:'maintenance', label:'Maintenance'},
+];
+
+/* ---------------- RENDER: tabs ---------------- */
+function renderTabs(){
+  document.getElementById('tabs').innerHTML = TABS.map(t =>
+    `<button class="tab ${t.id===activeTab?'active':''}" data-tab="${t.id}">${t.label}</button>`
+  ).join('');
+}
+function switchTab(id){
+  activeTab = id;
+  renderTabs();
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
+  document.getElementById('pane-'+id).classList.add('active');
+}
+
+/* ---------------- RENDER: overview ---------------- */
+function renderOverview(){
+  const o = DATA.overview;
+  document.getElementById('subtitle').textContent = o.subtitle();
+  const visibleAlerts = o.alerts.filter(a=>!dismissed.includes(a.id));
+
+  const alertHTML = visibleAlerts.length ? `
+    <div class="alertstrip">
+      <div class="alert-head">
+        ${svg('alert','#9A7A2E',15)}
+        <span class="lbl">Needs your attention</span>
+        <span class="count-pill">${visibleAlerts.length}</span>
+      </div>
+      ${visibleAlerts.map(a=>`
+        <div class="alert-row">
+          <span class="alert-chip" style="background:${a.tone==='bounce'?'rgba(168,90,44,.16)':'rgba(201,168,106,.20)'}">
+            ${svg(a.tone==='bounce'?'coins':'alert', a.tone==='bounce'?'#A85A2C':'#9A7A2E',15)}
+          </span>
+          <span class="alert-msg">${a.msg}</span>
+          <span class="alert-link">${a.link}</span>
+          <button class="alert-x" data-dismiss="${a.id}">${svg('','#857260',14).replace('></svg>','><path d="M18 6 6 18M6 6l12 12"/></svg>')}</button>
+        </div>`).join('')}
+    </div>` : `
+    <div class="alertstrip clear">
+      <div class="alert-head">
+        ${svg('check','#1E7E58',15)}
+        <span class="lbl">All clear — nothing needs your attention</span>
+      </div>
+    </div>`;
+
+  const kpiHTML = `<div class="kpi-grid">` + o.kpis.map(k=>`
+    <div class="kpi">
+      <div class="kpi-top">
+        <span class="chip" style="background:${tint(k.tint)}">${svg(k.icon,k.tint,16)}</span>
+        <span class="delta ${k.dtone}">${k.delta}</span>
+      </div>
+      <div class="kpi-value">${k.value}</div>
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-sub">${k.sub}</div>
+      <div class="kpi-cta">${k.cta}</div>
+    </div>`).join('') + `</div>`;
+
+  const marginHTML = `
+    <div class="card">
+      <div class="section-title">Per-Building Margin</div>
+      ${o.margins.map(m=>{
+        const c = m.tone==='green'?'#2E6B57':m.tone==='amber'?'#9A7A2E':'#BC512B';
+        return `<div class="marginrow">
+          <span class="nm">${m.name}</span>
+          <span class="track"><span class="fill" style="width:${m.pct*3}%;background:${c}"></span></span>
+          <span class="mpill" style="color:${c};background:${c}2E">${m.pct}%</span>
+        </div>`;
+      }).join('')}
+    </div>`;
+
+  const chartHTML = renderChart(o.chart);
+
+  const approvalHTML = `
+    <div class="card" style="padding:0">
+      <div style="padding:16px 18px 4px"><div class="section-title">Pending Your Approval</div></div>
+      ${o.approvals.map(a=>`
+        <div class="listrow">
+          <span class="rowchip" style="background:rgba(201,168,106,.18)">${svg(a.icon,'#9A7A2E',16)}</span>
+          <div style="flex:1">
+            <div style="font-size:12.5px;font-weight:600">${a.type}</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:1px">${a.ref}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:12.5px;font-weight:650">${a.amount}</div>
+            <div style="font-size:10px;color:var(--text-muted)">${a.age} ago</div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+
+  const arrMax = Math.max(...o.arrears.map(a=>a.amt));
+  const arrearsHTML = `
+    <div class="card">
+      <div class="section-title">Rent Arrears Aging</div>
+      ${o.arrears.map(a=>{
+        const c = a.tone==='green'?'#2E6B57':a.tone==='amber'?'#9A7A2E':'#BC512B';
+        return `<div class="marginrow">
+          <span class="nm" style="width:110px">${a.bucket}</span>
+          <span class="track"><span class="fill" style="width:${(a.amt/arrMax)*100}%;background:${c}"></span></span>
+          <span style="font-size:12px;font-weight:650;flex-shrink:0">${fmt(a.amt)}</span>
+        </div>`;
+      }).join('')}
+    </div>`;
+
+  document.getElementById('pane-overview').innerHTML = `
+    <div class="switcher" id="switcher">
+      ${['today','month','quarter','year'].map(t=>`<button class="pill ${t===timeframe?'active':''}" data-tf="${t}">${
+        {today:'Today',month:'This Month',quarter:'This Quarter',year:'This Year'}[t]}</button>`).join('')}
+    </div>
+    ${alertHTML}
+    ${kpiHTML}
+    <div class="grid-2">${marginHTML}${chartHTML}</div>
+    <div class="grid-2">${approvalHTML}${arrearsHTML}</div>`;
+}
+
+function renderChart(c){
+  const W=560,H=200,padL=32,padB=24,padT=12,padR=8;
+  const plotW=W-padL-padR, plotH=H-padT-padB;
+  const max=Math.max(...c.billed,...c.collected)*1.1;
+  const n=c.months.length, groupW=plotW/n, barW=groupW*0.28;
+  const y=v=>padT+plotH-(v/max)*plotH;
+  let bars='';
+  c.months.forEach((m,i)=>{
+    const cx=padL+groupW*i+groupW/2;
+    const bH=plotH-(y(c.billed[i])-padT), cH=plotH-(y(c.collected[i])-padT);
+    const collV=c.collected[i], col = collV>=c.target? '#1E7E58' : collV>=c.target*0.9? '#2E6B57' : '#9A7A2E';
+    bars += `<rect x="${cx-barW-1}" y="${y(c.billed[i])}" width="${barW}" height="${bH}" rx="3" fill="#D9C9B5"/>`;
+    bars += `<rect x="${cx+1}" y="${y(c.collected[i])}" width="${barW}" height="${cH}" rx="3" fill="${col}"/>`;
+    bars += `<text x="${cx}" y="${H-8}" font-size="9" fill="#857260" text-anchor="middle">${m}</text>`;
+  });
+  let grid='';
+  for(let g=0;g<=4;g++){const gy=padT+plotH*(g/4);grid+=`<line x1="${padL}" y1="${gy}" x2="${W-padR}" y2="${gy}" stroke="#EAE0D2"/>`;}
+  const ty=y(c.target);
+  return `
+    <div class="card">
+      <div class="section-title" style="margin-bottom:10px">Rent Collected vs Billed</div>
+      <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto">
+        ${grid}
+        <line x1="${padL}" y1="${ty}" x2="${W-padR}" y2="${ty}" stroke="#9A7A2E" stroke-width="1.3" stroke-dasharray="5 5"/>
+        ${bars}
+      </svg>
+      <div style="display:flex;gap:16px;margin-top:8px;font-size:10.5px;color:#857260">
+        <span><span style="display:inline-block;width:9px;height:9px;background:#D9C9B5;border-radius:2px;margin-right:4px"></span>Billed</span>
+        <span><span style="display:inline-block;width:9px;height:9px;background:#2E6B57;border-radius:2px;margin-right:4px"></span>Collected</span>
+        <span><span style="display:inline-block;width:12px;border-top:1.3px dashed #9A7A2E;margin-right:4px"></span>Target</span>
+      </div>
+    </div>`;
+}
+
+/* ---------------- RENDER: portfolio ---------------- */
+function renderPortfolio(){
+  const p = DATA.portfolio;
+  const statHTML = `<div class="statstrip">${p.stats.map(s=>`<div class="stat"><div class="k">${s.k}</div><div class="v">${s.v}</div></div>`).join('')}</div>`;
+  const toggleHTML = `<div class="seg">
+    <button class="${portfolioView==='buildings'?'active':''}" data-pv="buildings">Buildings</button>
+    <button class="${portfolioView==='units'?'active':''}" data-pv="units">Units</button></div>`;
+
+  let body='';
+  if(portfolioView==='buildings'){
+    body = p.buildings.map(b=>{
+      const c = b.mtone==='green'?'#2E6B57':b.mtone==='amber'?'#9A7A2E':'#BC512B';
+      const open = expanded.includes(b.id);
+      return `<div class="bldg ${open?'open':''}" data-bldg="${b.id}">
+        <div class="bldg-head">
+          <span class="chev">${svg('','#857260',16).replace('></svg>','><path d="m9 18 6-6-6-6"/></svg>')}</span>
+          <span class="bldg-nm">${b.name}</span>
+          ${b.tags.map(t=>`<span class="spill s-${t.c}">${t.t}</span>`).join('')}
+          <span class="kcol"><div class="kl">Income</div><div class="kv">${b.income}</div></span>
+          <span class="kcol"><div class="kl">Head-lease</div><div class="kv">${b.headlease}</div></span>
+          <span class="kcol"><div class="kl">Occupancy</div><div class="kv">${b.occ}</div></span>
+          <span class="mpill" style="color:${c};background:${c}2E">${b.margin}%</span>
+        </div>
+        <div class="units">
+          ${b.units.map(u=>`<div class="unitrow">
+            <span class="spill s-${u.status}" style="width:96px">${u.status}</span>
+            <span style="font-weight:600;width:110px">${u.label}</span>
+            <span style="flex:1">${u.tenant}</span>
+            <span style="color:var(--text-muted)">${u.note}</span>
+            <span style="font-weight:650">${u.rent}</span>
+          </div>`).join('')}
+        </div>
+      </div>`;
+    }).join('');
+  } else {
+    const rows = p.buildings.flatMap(b=>b.units.map(u=>({...u, building:b.name})));
+    body = `<div class="card" style="padding:0"><table class="data">
+      <thead><tr><th>Status</th><th>Building · Unit</th><th>Tenant</th><th>Note</th><th style="text-align:right">Rent</th></tr></thead>
+      <tbody>${rows.map(u=>`<tr>
+        <td><span class="spill s-${u.status}">${u.status}</span></td>
+        <td>${u.building} · ${u.label}</td>
+        <td>${u.tenant}</td>
+        <td style="color:var(--text-muted)">${u.note}</td>
+        <td style="text-align:right;font-weight:650">${u.rent}</td>
+      </tr>`).join('')}</tbody></table></div>`;
+  }
+  document.getElementById('pane-portfolio').innerHTML = statHTML + toggleHTML + body;
+}
+
+/* ---------------- RENDER: tenants ---------------- */
+function renderTenants(){
+  const t = DATA.tenants;
+  const statHTML = `<div class="statstrip">${t.stats.map(s=>`<div class="stat"><div class="k">${s.k}</div><div class="v">${s.v}</div></div>`).join('')}</div>`;
+  const chipHTML = `<div class="chips">${t.filters.map(f=>`<button class="fchip ${f===tenantFilter?'active':''}" data-tf2="${f}">${f}</button>`).join('')}</div>`;
+  const match = tn => {
+    if(tenantFilter==='All') return true;
+    if(tenantFilter==='Expiring soon') return tn.flag==='expiring';
+    if(tenantFilter==='In arrears') return tn.arrears!=='—';
+    if(tenantFilter==='PDC bounced') return tn.flag==='bounced';
+    if(tenantFilter==='New') return tn.flag==='new';
+    return true;
+  };
+  const rows = t.tenants.filter(match);
+  const flagBadge = f => f==='bounced'? `<span class="spill s-risk" style="margin-left:8px">⚠ PDC bounced</span>`
+    : f==='expiring'? `<span class="spill s-expiring" style="margin-left:8px">expiring</span>` : '';
+  const bookHTML = `<div class="card" style="padding:0">${rows.map(tn=>`
+    <div class="listrow">
+      <span class="rowchip" style="background:rgba(154,122,46,.14)">${svg('users','#9A7A2E',16)}</span>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:650">${tn.name}${flagBadge(tn.flag)}</div>
+        <div style="font-size:11px;color:#9A8775;margin-top:2px">${tn.building} · ${tn.dates}</div>
+      </div>
+      <div style="text-align:right;font-size:12px;${tn.arrears!=='—'?'color:var(--orange-warn);font-weight:650':'color:var(--text-muted)'}">${tn.arrears==='—'?'No arrears':tn.arrears}</div>
+    </div>`).join('') || '<div style="padding:24px;text-align:center;color:var(--text-muted);font-size:12.5px">No tenants match this filter.</div>'}</div>`;
+
+  const pipeHTML = `<div class="card mt16">
+    <div class="section-title">Leasing Pipeline</div>
+    ${t.pipeline.map(pl=>`<div class="listrow" style="border-bottom:1px solid var(--border-default)">
+      <span class="spill s-expiring" style="width:110px">${pl.stage}</span>
+      <div style="flex:1"><div style="font-size:12.5px;font-weight:600">${pl.name}</div>
+        <div style="font-size:11px;color:var(--text-muted)">${pl.unit}</div></div>
+      <span style="font-size:12.5px;font-weight:650">${pl.value}</span>
+    </div>`).join('')}</div>`;
+
+  document.getElementById('pane-tenants').innerHTML = statHTML + chipHTML + bookHTML + pipeHTML;
+}
+
+/* ---------------- RENDER: finance ---------------- */
+function renderFinance(){
+  const f = DATA.finance;
+  const statHTML = `<div class="statstrip">${f.stats.map(s=>`<div class="stat"><div class="k">${s.k}</div><div class="v">${s.v}</div></div>`).join('')}</div>`;
+  const stcol = s => s==='collected'?'#1E7E58':s==='partial'?'#9A7A2E':'#BC512B';
+  const revHTML = `<div class="card" style="padding:0">
+    <div style="padding:16px 18px 4px"><div class="section-title">Revenue by Building</div></div>
+    <table class="data"><thead><tr><th>Building</th><th style="text-align:right">Billed</th><th style="text-align:right">Collected</th><th>Status</th></tr></thead>
+    <tbody>${f.lines.map(l=>`<tr>
+      <td style="font-weight:600">${l.building}</td>
+      <td style="text-align:right">${l.billed}</td>
+      <td style="text-align:right;font-weight:650">${l.collected}</td>
+      <td><span style="font-size:11px;font-weight:600;color:${stcol(l.status)}">${l.status}</span></td>
+    </tr>`).join('')}</tbody></table></div>`;
+
+  const pstcol = s => s==='cleared'?'#1E7E58':s==='pending'?'#9A7A2E':'#BC512B';
+  const pdcHTML = `<div class="card mt16" style="padding:0">
+    <div style="padding:16px 18px 4px"><div class="section-title">PDC Cheque Tracker</div></div>
+    <table class="data"><thead><tr><th>Tenant</th><th style="text-align:right">Amount</th><th>Due Date</th><th>Status</th></tr></thead>
+    <tbody>${f.pdc.map(p=>`<tr>
+      <td style="font-weight:600">${p.tenant}</td>
+      <td style="text-align:right;font-weight:650">${p.amount}</td>
+      <td>${p.due}</td>
+      <td><span class="spill" style="color:${pstcol(p.status)};background:${pstcol(p.status)}22">${p.status}</span></td>
+    </tr>`).join('')}</tbody></table></div>`;
+
+  document.getElementById('pane-finance').innerHTML = statHTML + revHTML + pdcHTML;
+}
+
+/* ---------------- RENDER: maintenance ---------------- */
+function renderMaintenance(){
+  const m = DATA.maintenance;
+  const max = Math.max(...m.byBuilding.map(b=>b.open));
+  const barsHTML = `<div class="card">
+    <div class="section-title">Open Requests by Building</div>
+    ${m.byBuilding.map(b=>`<div class="marginrow">
+      <span class="nm">${b.name}</span>
+      <span class="track"><span class="fill" style="width:${(b.open/max)*100}%;background:#9A7A2E"></span></span>
+      <span style="font-size:12px;font-weight:650;flex-shrink:0">${b.open}</span>
+    </div>`).join('')}</div>`;
+
+  const pcls = p => p==='high'?'p-high':p==='med'?'p-med':'p-low';
+  const plabel = p => p==='high'?'High':p==='med'?'Medium':'Low';
+  const tableHTML = `<div class="card mt16" style="padding:0">
+    <div style="padding:16px 18px 4px"><div class="section-title">Open Tickets</div></div>
+    <table class="data"><thead><tr><th>Priority</th><th>Title</th><th>Building</th><th>Assignee</th><th>Age</th></tr></thead>
+    <tbody>${m.tickets.map(t=>`<tr>
+      <td><span class="prio ${pcls(t.prio)}">${plabel(t.prio)}</span></td>
+      <td style="font-weight:600">${t.title}</td>
+      <td>${t.building}</td>
+      <td style="color:${t.assignee==='Unassigned'?'var(--orange-warn)':'inherit'}">${t.assignee}</td>
+      <td style="color:var(--text-muted)">${t.age}</td>
+    </tr>`).join('')}</tbody></table></div>`;
+
+  document.getElementById('pane-maintenance').innerHTML = barsHTML + tableHTML;
+}
+
+/* ---------------- EVENT DELEGATION ---------------- */
+document.addEventListener('click', e=>{
+  const tab = e.target.closest('[data-tab]');
+  if(tab){ switchTab(tab.dataset.tab); return; }
+
+  const tf = e.target.closest('[data-tf]');
+  if(tf){ timeframe = tf.dataset.tf; renderOverview(); return; }
+
+  const dis = e.target.closest('[data-dismiss]');
+  if(dis){ dismissed.push(dis.dataset.dismiss); renderOverview(); return; }
+
+  const pv = e.target.closest('[data-pv]');
+  if(pv){ portfolioView = pv.dataset.pv; renderPortfolio(); return; }
+
+  const bldg = e.target.closest('[data-bldg]');
+  if(bldg){ const id=bldg.dataset.bldg;
+    expanded = expanded.includes(id)? expanded.filter(x=>x!==id) : [...expanded,id];
+    renderPortfolio(); return; }
+
+  const tf2 = e.target.closest('[data-tf2]');
+  if(tf2){ tenantFilter = tf2.dataset.tf2; renderTenants(); return; }
+});
+
+/* ---------------- BOOT ---------------- */
+(async function init(){
+  DATA = await loadData();
+  renderTabs();
+  renderOverview();
+  renderPortfolio();
+  renderTenants();
+  renderFinance();
+  renderMaintenance();
+})();
+</script>
+</body>
+</html>{% endraw %}
