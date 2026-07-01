@@ -1,3 +1,6 @@
+import frappe
+
+
 def set_md_home(login_manager=None):
     if frappe.session.user == "Administrator":
         return
