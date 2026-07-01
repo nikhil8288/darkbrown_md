@@ -14,6 +14,4 @@ website_route_rules = [
     {"from_route": "/md-dashboard", "to_route": "md-dashboard"},
 ]
 
-role_home_page = {
-    "Managing Director": "md-dashboard",
-}
+on_session_creation = "darkbrown_md.auth.set_md_home"
